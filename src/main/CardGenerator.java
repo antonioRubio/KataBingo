@@ -8,50 +8,67 @@ public class CardGenerator {
 
 	public static Card getCard() throws GapException {
 		Card card = new Card();
-		Gap[][] gaps = generateGapArray();
+		Gap[][] gaps = generateNonBlankGaps();
 		gaps = fillBlanks(gaps);
 		card.setGaps(gaps);
 		return card;
 	}
 	
-	private static Gap[][] generateGapArray() throws GapException {
+	private static Gap[][] generateNonBlankGaps() throws GapException {
 		Gap[][] gaps = new Gap[Card.NUM_LINES][Card.NUM_COLUMNS];
-		for (int j = 0; j < Card.NUM_COLUMNS; j++) {
-			Gap[] gapsColumn = getColumnRandomized(j);
-			for (int i = 0; i < Card.NUM_LINES; i++)
-				gaps[i][j] = gapsColumn[i];
+		for (int column = 0; column < Card.NUM_COLUMNS; column++) {
+			Gap[] gapsColumn = getColumnRandomized(column);
+			for (int line = 0; line < Card.NUM_LINES; line++)
+				gaps[line][column] = gapsColumn[line];
 		}
 		return gaps;
 	}
 	
 	private static Gap[][] fillBlanks(Gap[][] gaps) throws GapException {
-		for (int i = 0; i < Card.NUM_LINES; i++) {
-			List<Integer> columnPositions = new ArrayList<Integer>();
-			for (int j = 0; j < Card.NUM_COLUMNS; j++)
-				columnPositions.add(j);
-			Collections.shuffle(columnPositions);
-			for (int k = 0; k < Card.NUM_BLANKS_PER_LINE; k++) {
-				int blankPosition = columnPositions.get(k);
-				gaps[i][blankPosition].setValue(Gap.BLANK);
-			}
+		for (int line = 0; line < Card.NUM_LINES; line++) {
+			fillLineBlanks(line, gaps);
 		}
 		return gaps;
-		
 	}
 	
+	private static void fillLineBlanks(int line, Gap[][] gaps) throws GapException {
+		int maxColumn = Card.NUM_COLUMNS - 1;
+		Integer[] columnPositions = shuffleInterval(0, maxColumn);
+		for (int randomPosition = 0; randomPosition < Card.NUM_BLANKS_PER_LINE; 
+				randomPosition++) {
+			int blankPosition = columnPositions[randomPosition];
+			Gap blankGap = gaps[line][blankPosition];
+			blankGap.setValue(Gap.BLANK);
+		}
+	}
+	
+	private static Integer[] shuffleInterval(int minValue, int maxValue) {
+		List<Integer> positions = new ArrayList<Integer>();
+		for (int value = minValue; value <= maxValue; value++)
+			positions.add(value);
+		Collections.shuffle(positions);
+		Integer[] resultPositions = new Integer[positions.size()];
+		return positions.toArray(resultPositions);
+	}
+
 	private static Gap[] getColumnRandomized(int column) throws GapException {
+		int dozenInColumn = column * 10;
+		boolean isFirstColumn = (dozenInColumn == 0);
+		int minPossibleValue = isFirstColumn ? 1 : dozenInColumn;
+		int maxPossibleValue = dozenInColumn + 9;
+		Integer[] columnValues = shuffleInterval(minPossibleValue, maxPossibleValue);
+		return fillGapColumn(columnValues);
+	}
+
+	private static Gap[] fillGapColumn(Integer[] columnValues)
+			throws GapException {
 		Gap[] columnGaps = new Gap[Card.NUM_LINES];
-		List<Integer> columnValues = new ArrayList<Integer>();
-		int maxPossibleValue = (column * 10) + 9;
-		int minPossibleValue = (column * 10);
-		for (int i = minPossibleValue; i <= maxPossibleValue; i++)
-			if (i > 0) columnValues.add(i);
-		Collections.shuffle(columnValues);
 		for (int i = 0; i < Card.NUM_LINES; i++) {
-			columnGaps[i] = new Gap();
-			columnGaps[i].setValue(columnValues.get(i));
+			Gap gap = new Gap();
+			int value = columnValues[i];
+			gap.setValue(value);
+			columnGaps[i] = gap;
 		}
 		return columnGaps;
 	}
-	
 }

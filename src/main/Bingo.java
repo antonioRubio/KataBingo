@@ -15,17 +15,10 @@ public class Bingo {
 	
 	public void play() {
 		while (generator.hasNext() && !isBingoAwarded()) {
-			boolean lastLineAwarded = isLineAwarded();
 			int nextNumber = generator.getNextNumber();
 			markNumberInAllCards(nextNumber);
-			if (isLineAwarded() && !lastLineAwarded) {
-				System.out.println("LINEA:");
-				System.out.println(lineAwardCard);
-			}
 			
 		}
-		System.out.println("BINGO");
-		System.out.println(bingoAwardCard);
 	}
 
 	private void markNumberInAllCards(int nextNumber) {

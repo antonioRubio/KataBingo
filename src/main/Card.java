@@ -21,12 +21,6 @@ public class Card {
 	}
 	
 
-	public boolean isCorrect() {
-		if (hasCorrectValues())
-			return true;
-		return false;
-	}
-	
 	private boolean hasCorrectNumberOfBlanksInLine(Gap[] line) {
 		int numBlanks = 0;
 		for (Gap gap: line) {
@@ -45,28 +39,31 @@ public class Card {
 		return numNumbers == NUM_NUMBERS_PER_LINE;
 	}
 	
-	private boolean hasCorrectValues() {
+	public boolean isCorrect() {
 		Set<Integer> cardValues = new HashSet<Integer>();
-		for (int i = 0; i < NUM_LINES; i ++) {
-			if (!hasCorrectNumberOfBlanksInLine(gaps[i]) ||
-					!hasCorrectNumberOfNumbersInLine(gaps[i]))
+		for (int line = 0; line < NUM_LINES; line++) {
+			Gap[] lineGaps = gaps[line];
+			if (!hasCorrectNumberOfBlanksInLine(lineGaps) ||
+					!hasCorrectNumberOfNumbersInLine(lineGaps) ||
+					!hasPossibleValue(lineGaps, cardValues))
 				return false;
-			for (int j = 0; j < NUM_COLUMNS; j++) {
-				if (!gaps[i][j].isBlank()) {
-					int value = gaps[i][j].getValue();
-					if (cardValues.contains(value))
-						return false;
-					else {
-						cardValues.add(value);
-						if (!possibleValue(value, j))
-							return false;
-					}
-				}
-			}
 		}
 		return true;
 	}
 	
+	private boolean hasPossibleValue(Gap[] lineGaps, Set<Integer> cardValues) {
+		for (int column = 0; column < NUM_COLUMNS; column++) {
+			Gap gap = lineGaps[column];
+			if (gap.isBlank()) return true;
+			int value = gap.getValue();
+			if (possibleValue(value, column) && !cardValues.contains(value))
+				cardValues.add(value);
+			else
+				return false;
+		}
+		return true;
+	}
+
 	private boolean possibleValue(int value, int column) {
 		int maxPossibleValue = (column * 10) + 9;
 		int minPossibleValue = (column * 10);
@@ -75,14 +72,32 @@ public class Card {
 	
 	public String toString() {
 		String res = "";
-		for (int i = 0; i < NUM_LINES; i++) {
+		for (int line = 0; line < NUM_LINES; line++) {
 			res += "[";
-			for (int j = 0; j < NUM_COLUMNS; j++) {
-				res += gaps[i][j].toString() + ", ";
+			for (int column = 0; column < NUM_COLUMNS; column++) {
+				res += gaps[line][column].toString() + ", ";
 			}
 			res += "]\n";
 		}
 		return res;
+	}
+	
+	public void mark(int number) {
+		for (int line = 0; line < NUM_LINES; line++) {
+			markGapInLine(number, line);
+		}
+	}
+	
+	private void markGapInLine(int number, int line) {
+		for (int column = 0; column < NUM_COLUMNS; column++) {
+			markGap(number, line, column);
+		}
+	}
+	
+	private void markGap(int number, int line, int column) {
+		Gap gap = gaps[line][column];
+		if (gap.getValue() == number) 
+			gap.mark();
 	}
 
 	public boolean hasLineAward() {
@@ -100,17 +115,6 @@ public class Card {
 		}
 		return true;
 	}
-
-	public void mark(int number) {
-		for (int i = 0; i < NUM_LINES; i++) {
-			for (int j = 0; j < NUM_COLUMNS; j++) {
-				if (gaps[i][j].getValue() == number) {
-					gaps[i][j].mark();
-					return;
-				}
-			}
-		}
-	}
 	
 	private boolean fullMarkedLine(int line) {
 		int nums = NUM_COLUMNS - NUM_BLANKS_PER_LINE;
@@ -121,5 +125,5 @@ public class Card {
 		}
 		return nums == 0;
 	}
-
+	
 }
